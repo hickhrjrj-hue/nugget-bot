@@ -1,12 +1,11 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const express = require('express'); // Fixed: Added web server to stop the 'requirements.txt' cloud error
+const express = require('express'); 
 const app = express();
 const port = process.env.PORT || 3000;
 
 let latestQr = '';
 
-// Web server dashboard to keep the cloud host active and display your QR code safely
 app.get('/', (req, res) => {
     if (latestQr) {
         res.send(`
@@ -25,7 +24,10 @@ app.listen(port, () => {
 });
 
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    // FIXED FOR RENDER: Forces session storage into a writeable server directory
+    authStrategy: new LocalAuth({
+        dataPath: '/tmp/.wwebjs_auth'
+    }),
     puppeteer: {
         headless: true,
         args: [
@@ -67,9 +69,8 @@ client.on('message', async (msg) => {
     }
 });
 
-// Fixed: Handles messages you send to yourself from your own phone
+// Handles messages you send to yourself from your own phone
 client.on('message_create', async (msg) => {
-    // Triggers if you send the message, and you sent it to your own chat window
     if (msg.fromMe && msg.to === msg.from) {
         const incomingText = msg.body.toLowerCase();
 
